@@ -4,4 +4,6 @@
 **/.pydevproject
 **/.project
 **/.settings
+**/*.o
+**/*.pyc
 RemoteSystemsTempFiles

@@ -12,7 +12,7 @@ python_object_files := $(patsubst src/arch/$(arch)/%.py, \
     build/arch/$(arch)/py/%.o, $(python_source_files))
 
     
-japyc := PYTHONPATH=.. python3.5 -m japyc
+japyc=python3.5 ../japyc/japyc.py
 
 .PHONY: all clean run iso
 

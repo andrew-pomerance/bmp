@@ -19,14 +19,8 @@ class Colors(Enum):
 def print_okay():
     put_int64(0xb8000, 0x2f592f412f4b2f4f)
     
-const(SCREEN_WIDTH=80)
-const(SCREEN_HEIGHT=25)
-const(VRAM_BASE=0xb8000)
-    
 def print_char(c, x, y, fg_col, bg_col):
-    addr = VRAM_BASE+2*(x+y*SCREEN_WIDTH)
-    color_byte = fg_col+16*bg_col
-    put_int64(addr, c+256*color_byte)
+    put_int64(0xb8000+2*(x+y*80), c+256*fg_col+16*256*bg_col)
 
 def sebel_main():
     print_okay()
