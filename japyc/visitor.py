@@ -2,6 +2,57 @@ import ast
 from .nodes import *
 
 class JapycVisitor(ast.NodeVisitor):
+    builtins = [
+        '_jconst',
+        '_jenum',
+        '_jput64',
+        '_jput32',
+        '_jput16',
+        '_jput8',
+        '_jin8',
+        '_jin16',
+        '_jin32',
+        '_jout8',
+        '_jout16',
+        '_jout32'
+    ]
+    
+    def _visit_literal(self, node):
+        retval = self.visit(node)
+        assert isinstance(retval, JapycLiteral)
+        return retval
+    
+    def builtin_jenum(self, node):
+        # enums
+        assert len(node.args) == 1
+        assert isinstance(node.args[0], ast.Str)
+        enum_name = node.args[0].s            
+        enum_dict = {kw.arg: self._visit_literal(kw.value) for kw in node.keywords}  
+        self.enums[enum_name] = enum_dict
+        return None
+    
+    def builtin_jconst(self, node):
+        assert len(node.args) == 0
+        assert len(node.keywords) == 1
+        self.consts[node.keywords[0].arg] = self._visit_literal(node.keywords[0].value)
+        return None
+    
+    def builtin_jput64(self, node):
+        return JapycPutInt(self.visit(node.args[0]), 
+                           self.visit(node.args[1]), 64)
+    
+    def builtin_jput32(self, node):
+        return JapycPutInt(self.visit(node.args[0]), 
+                           self.visit(node.args[1]), 32)
+
+    def builtin_jput16(self, node):
+        return JapycPutInt(self.visit(node.args[0]), 
+                           self.visit(node.args[1]), 16)
+
+    def builtin_jput8(self, node):
+        return JapycPutInt(self.visit(node.args[0]), 
+                           self.visit(node.args[1]), 8)        
+    
     def __init__(self):
         self.enums = {}
         self.consts = {}
@@ -25,6 +76,7 @@ class JapycVisitor(ast.NodeVisitor):
             return JapycVariable(node.id)
     
     def visit_FunctionDef(self, node):
+        assert node.name not in self.builtins
         args = [JapycVariable(a.arg) for a in node.args.args]
         body = self._visit_with_remove(node.body)
         return JapycFunction(node.name, args, body)
@@ -34,38 +86,13 @@ class JapycVisitor(ast.NodeVisitor):
     
     def visit_Call(self, node):
         assert isinstance(node.func, ast.Name)
-        put_builtins = ('put_int64', 'put_int32', 'put_int16', 'put_int8')
-        if node.func.id in put_builtins:
-            bits = int(node.func.id[7:])
-            memory_address = self.visit(node.args[0])
-            value = self.visit(node.args[1])
-            return JapycPutInt(memory_address, value, bits)
-        elif node.func.id == 'const':
-            assert len(node.keywords) == 1
-            assert node.keywords[0].arg is not None
-            val = self.visit(node.keywords[0].value)
-            assert isinstance(val, JapycLiteral)          
-            self.consts[node.keywords[0].arg] = val
-            return None
+        if node.func.id in self.builtins:
+            return getattr(self, 'builtin'+node.func.id)(node) 
         else:
             return JapycFunctionCall(node.func.id, self._visit_with_remove(node.args))
         
     def visit_ClassDef(self, node):
-        assert len(node.bases) == 1
-        if node.bases[0].id != 'Enum':
-            raise NotImplementedError()
-        enum_dict = {}
-        for enum_node in node.body:
-            # each node in an enum classdef body is an Assign node
-            # if there are any shenanigans, go ahead and barf
-            assert isinstance(enum_node, ast.Assign)
-            assert len(enum_node.targets) == 1
-            assert isinstance(enum_node.targets[0], ast.Name)
-            val = self.visit(enum_node.value)
-            assert isinstance(val, JapycLiteral)
-            enum_dict[enum_node.targets[0].id] = val
-        self.enums[node.name] = enum_dict
-        return None
+        raise NotImplementedError()
             
     def visit_Attribute(self, node):
         assert isinstance(node.value, ast.Name)

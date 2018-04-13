@@ -1,32 +1,32 @@
-class Colors(Enum):
-    BLACK       = 0
-    BLUE        = 1
-    GREEN       = 2
-    CYAN        = 3
-    RED         = 4
-    MAGENTA     = 5
-    BROWN       = 6
-    LIGHT_GRAY  = 7
-    DARK_GRAY   = 8
-    LIGHT_BLUE  = 9
-    LIGHT_GREEN = 10
-    LIGHT_CYAN  = 11
-    LIGHT_RED   = 12
-    PINK        = 13
-    YELLOW      = 14
-    WHITE       = 15
+_jenum('Colors',
+    BLACK       = 0,
+    BLUE        = 1,
+    GREEN       = 2,
+    CYAN        = 3,
+    RED         = 4,
+    MAGENTA     = 5,
+    BROWN       = 6,
+    LIGHT_GRAY  = 7,
+    DARK_GRAY   = 8,
+    LIGHT_BLUE  = 9,
+    LIGHT_GREEN = 10,
+    LIGHT_CYAN  = 11,
+    LIGHT_RED   = 12,
+    PINK        = 13,
+    YELLOW      = 14,
+    WHITE       = 15)
     
 def print_okay():
-    put_int64(0xb8000, 0x2f592f412f42f4f)
+    _jput64(0xb8000, 0x2f592f412f42f4f)
     
-const(SCREEN_WIDTH=80)
-const(SCREEN_HEIGHT=25)
-const(VRAM_BASE=0xb8000)
+_jconst(SCREEN_WIDTH=80)
+_jconst(SCREEN_HEIGHT=25)
+_jconst(VRAM_BASE=0xb8000)
     
 def print_char(c, x, y, fg_col, bg_col):
     addr = VRAM_BASE+2*(x+y*SCREEN_WIDTH)
     color_byte = fg_col+16*bg_col
-    put_int64(addr, c+256*color_byte)
+    _jput64(addr, c+256*color_byte)
 
 def sebel_main():
     print_char('W', 30, 12, Colors.WHITE, Colors.BLACK)
